@@ -74,6 +74,7 @@ pub fn console_log(x: &str) {
 #[wasm_bindgen]
 pub fn update_text(id: &str) {
     if let Some(target) = querySelector(id) {
+        target.set_attribute("style", "color: white").unwrap();
         target.set_text_content(Some("I am Rust!"));
     }
 }
