@@ -13,25 +13,16 @@
 </style>
 </head>
 <body>
-  <p id="some">hello</p>
+  <div id="root"></div>
 
   <script type="module">
-    import { default as wasm, say_hi, typed_arr, rsult_enum, Cat, console_log, update_text } from './pkg/web_dom.js'
+    import init, { app } from './pkg/web_dom.js'
 
-    wasm().then(module => {
-      console.log(typed_arr([8, 9, 0]))
-      console.log(rsult_enum(true))
-      // console.log(rsult_enum(false))
 
-      say_hi()
-
-      const tom = new Cat("Tom")
-      // const tom2 = tom.transfer_ownership();
-
-      console_log(tom.say())
-
-      update_text("#some")
-    })
+    (async function() {
+      await init()
+      app()
+    })()
   </script>
 </body>
 </html>

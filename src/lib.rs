@@ -1,5 +1,5 @@
-use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
-use web_sys::Element;
+use wasm_bindgen::prelude::*;
+use web_sys::{Element, Document, MouseEvent, window, Event, HtmlInputElement};
 
 
 #[wasm_bindgen()]
@@ -11,6 +11,9 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = document)]
     pub fn querySelector(id: &str) -> Option<Element>;
+
+    #[wasm_bindgen(js_namespace = document)]
+    pub fn createElement(element: &str) -> Option<Element>;
 }
 
 
@@ -60,21 +63,73 @@ impl Cat {
 
 
 #[wasm_bindgen]
-pub fn say_hi() {
-    alert("Hi from Rust");
-}
-
-
-#[wasm_bindgen]
-pub fn console_log(x: &str) {
-    log(x);
-}
-
-
-#[wasm_bindgen]
 pub fn update_text(id: &str) {
     if let Some(target) = querySelector(id) {
         target.set_attribute("style", "color: white").unwrap();
         target.set_text_content(Some("I am Rust!"));
     }
+}
+
+
+fn create_button(
+    document: &Document,
+    text: Option<&str>,
+    class: &str
+) -> Element {
+    let ele = document.create_element("div").expect("Failed create div element");
+    let ctx = document.create_element("p").expect("Failed create p element");
+
+    ctx.set_text_content(text);
+
+    ele.set_attribute("class", class).expect("Failed to set class attribute element");
+    ele.set_attribute("onclick", &format!("show('{}')", text.expect("Failed: text is null"))).expect("Failed to set onclick attribute.");
+
+    ele
+}
+
+
+#[wasm_bindgen()]
+pub fn app() {
+    let window = window().expect("Failed to load window");
+    let document = window.document().expect("Failed to load document");
+
+    // Elements
+    let root = document.query_selector("#root")
+        .expect("Failed to select root element")
+        .expect("Not found root element");
+
+    let container = document
+        .create_element("div")
+        .expect("Failed to create div element");
+    let cal = document
+        .create_element("div")
+        .expect("Failed to create div element");
+
+    root.append_child(&container)
+        .expect("Failed to append container");
+    container.append_child(&cal)
+        .expect("Failed to append cal");
+
+    let input = document
+        .create_element("input")
+        .expect("Failed to creeate input element");
+    input.set_attribute("placeholder", "some text").expect("Failed to set placeholder input");
+
+    let button_container = document
+        .create_element("div")
+        .expect("Failed to create button container");
+
+    cal.append_child(&input)
+        .expect("Failed to append input");
+    cal.append_child(&button_container)
+        .expect("Failed to append button_container");
+
+    let ac = create_button(&document, Some("AC"), "btn primary-operator ac");
+
+    let handle_change_input = Closure::wrap(Box::new(move |evt: Event| {
+        let value = evt.target().expect("Failed to load target").dyn_into::<HtmlInputElement>().expect("Failed to load input element").value();
+        log(&value);
+    }) as Box<dyn FnMut(Event)>);
+    input.add_event_listener_with_callback("input", &handle_change_input.as_ref().unchecked_ref()).expect("Failed to set event listener");
+    handle_change_input.forget();
 }
